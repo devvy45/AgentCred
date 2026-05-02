@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id              String         @id @default(cuid())
+  ensName         String         @unique
+  operatorAddress String         @unique
+  keeperhubId     String?
+  capabilities    String
+  chains          String
+  description     String?
+  score           Int            @default(0)
+  totalExecutions Int            @default(0)
+  successRate     Float          @default(0)
+  streak          Int            @default(0)
+  status          String         @default("active")
+  registeredAt    DateTime       @default(now())
+  lastExecution   DateTime?
+  executions      Execution[]
+  scoreHistory    ScoreHistory[]
+}
+
+model Execution {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  txHash    String?
+  status    String
+  gasUsed   String?
+  timestamp DateTime
+  metadata  String?
+  createdAt DateTime @default(now())
+}
+
+model ScoreHistory {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  score     Int
+  timestamp DateTime @default(now())
+}
