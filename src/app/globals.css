@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --surface: #111111;
+  --border: #222222;
+  --muted: #888888;
+  --accent: #00ff87;
+  --warning: #ffb800;
+  --danger: #ff4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0, 255, 135, 0.12), transparent 32rem),
+    linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+@layer components {
+  .container-shell {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .surface {
+    @apply border border-[#222222] bg-[#111111]/90 shadow-[0_0_0_1px_rgba(255,255,255,0.02)];
+  }
+
+  .muted {
+    @apply text-[#888888];
+  }
+
+  .mono {
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
