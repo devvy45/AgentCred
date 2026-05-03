@@ -12,7 +12,6 @@ import { ENS_KEYS, resolveENS } from "@/lib/ens";
 import { CHAIN_OPTIONS, CAPABILITY_OPTIONS } from "@/lib/options";
 import { agentRegistryAbi } from "@/lib/registry";
 import { cn, truncateAddress } from "@/lib/utils";
-import { baseSepolia } from "wagmi/chains";
 
 export function RegisterForm() {
   const { address, isConnected } = useAccount();
@@ -108,7 +107,6 @@ export function RegisterForm() {
         functionName: "register",
         args: [ensName],
         gas: BigInt(200000),
-        chainId: baseSepolia.id,
       });
       setRegistryTxHash(registryTx);
 
