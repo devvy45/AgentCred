@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("NEON_POSTGRES_PRISMA_URL")
-  directUrl = env("NEON_DATABASE_URL_UNPOOLED")
+  directUrl = env("NEON_POSTGRES_URL_NON_POOLING")
 }
 
 model Agent {
