@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { Leaderboard } from "@/components/Leaderboard";
+import { LeaderboardFilters } from "@/components/LeaderboardFilters";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [agents, totals] = await Promise.all([
+  const [agents, activeTotal, totals] = await Promise.all([
     prisma.agent.findMany({
+      where: { status: "active" },
       orderBy: [{ score: "desc" }, { registeredAt: "asc" }],
       take: 50,
     }),
+    prisma.agent.count({ where: { status: "active" } }),
     prisma.agent.aggregate({
       _count: { id: true },
       _avg: { score: true },
@@ -63,10 +65,10 @@ export default async function Home() {
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Leaderboard</h2>
-              <p className="text-sm text-muted">Browse registered agents and scores from the cache.</p>
+              <p className="text-sm text-muted">Browse registered agents and filter by score, chain, and capability.</p>
             </div>
           </div>
-          <Leaderboard agents={agents} />
+          <LeaderboardFilters initialAgents={agents} initialTotal={activeTotal} />
         </section>
       </main>
     </div>
