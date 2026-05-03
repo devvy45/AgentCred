@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getAgentBundleByEnsName } from "@/lib/agentQueries";
 import { parseJsonArray } from "@/lib/utils";
 import type { AgentWithStats } from "@/types";
 
@@ -12,13 +12,7 @@ type RouteContext = { params: { name: string } };
 export async function GET(_request: Request, context: RouteContext) {
   const ensName = decodeURIComponent(context.params.name);
 
-  const row = await prisma.agent.findUnique({
-    where: { ensName },
-    include: {
-      executions: { orderBy: { timestamp: "desc" } },
-      scoreHistory: { orderBy: { timestamp: "asc" } },
-    },
-  });
+  const row = await getAgentBundleByEnsName(ensName);
 
   if (!row) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 });

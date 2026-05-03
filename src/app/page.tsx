@@ -63,7 +63,7 @@ export default async function Home() {
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Leaderboard</h2>
-              <p className="text-sm text-muted">Discovery and filters ship with the API routes next.</p>
+              <p className="text-sm text-muted">Browse registered agents and scores from the cache.</p>
             </div>
           </div>
           <Leaderboard agents={agents} />

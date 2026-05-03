@@ -11,7 +11,7 @@ export function AgentCard({ agent, rank }: { agent: Agent; rank: number }) {
     <tr className="border-t border-border transition hover:bg-white/[0.03]">
       <td className="mono px-4 py-4 text-sm text-muted">#{rank}</td>
       <td className="px-4 py-4">
-        <Link href={`/agent/${agent.ensName}`} className="flex items-center gap-3">
+        <Link href={`/agent/${encodeURIComponent(agent.ensName)}`} className="flex items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-md border border-accent/30 bg-accent/10 font-bold text-accent">
             {agent.ensName.slice(0, 1).toUpperCase()}
           </div>
@@ -38,7 +38,7 @@ export function AgentCard({ agent, rank }: { agent: Agent; rank: number }) {
       <td className="px-4 py-4 text-sm text-muted">{formatRelativeTime(agent.lastExecution)}</td>
       <td className="px-4 py-4 text-right">
         <Button asChild variant="secondary" size="sm">
-          <Link href={`/agent/${agent.ensName}`}>View</Link>
+          <Link href={`/agent/${encodeURIComponent(agent.ensName)}`}>View</Link>
         </Button>
       </td>
     </tr>

@@ -87,7 +87,7 @@ export function RegisterForm() {
         return response.json();
       });
 
-      setProfileUrl(`/agent/${ensName}`);
+      setProfileUrl(`/agent/${encodeURIComponent(ensName)}`);
       setStep(5);
     } finally {
       setSubmitting(false);
