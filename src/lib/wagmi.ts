@@ -2,7 +2,7 @@
 
 import { QueryClient } from "@tanstack/react-query";
 import { http, createConfig } from "wagmi";
-import { injected, metaMask } from "wagmi/connectors";
+import { injected } from "wagmi/connectors";
 import { sepolia } from "wagmi/chains";
 
 const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY
@@ -13,7 +13,7 @@ export const queryClient = new QueryClient();
 
 export const wagmiConfig = createConfig({
   chains: [sepolia],
-  connectors: [metaMask(), injected()],
+  connectors: [injected()],
   transports: {
     [sepolia.id]: http(rpcUrl),
   },
