@@ -149,7 +149,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
               </p>
               <a
                 className="mt-3 inline-block text-accent hover:underline"
-                href={`https://app.ens.domains/${agent.ensName}`}
+                href={`https://sepolia.app.ens.domains/${agent.ensName}`}
                 target="_blank"
                 rel="noreferrer"
               >
