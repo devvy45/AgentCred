@@ -41,14 +41,17 @@ export async function getExecution(executionId: string): Promise<KeeperHubExecut
 
 export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
   if (!payload || !signature || !secret) return false;
+  const trimmed = signature.trim();
+  const hex = trimmed.startsWith("sha256=") ? trimmed.slice(7) : trimmed;
   const digest = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-  const candidates = [digest, `sha256=${digest}`];
-
-  return candidates.some((candidate) => {
-    const left = Buffer.from(candidate);
-    const right = Buffer.from(signature);
-    return left.length === right.length && crypto.timingSafeEqual(left, right);
-  });
+  const left = Buffer.from(digest, "utf8");
+  const right = Buffer.from(hex, "utf8");
+  if (left.length !== right.length) return false;
+  try {
+    return crypto.timingSafeEqual(left, right);
+  } catch {
+    return false;
+  }
 }
 
 export async function getProject(projectId: string): Promise<KeeperHubProject> {
