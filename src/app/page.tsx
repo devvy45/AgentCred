@@ -1,28 +1,9 @@
 import Link from "next/link";
 import { LeaderboardFilters } from "@/components/LeaderboardFilters";
-import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [agents, activeTotal, totals] = await Promise.all([
-    prisma.agent.findMany({
-      where: { status: "active" },
-      orderBy: [{ score: "desc" }, { registeredAt: "asc" }],
-      take: 50,
-    }),
-    prisma.agent.count({ where: { status: "active" } }),
-    prisma.agent.aggregate({
-      _count: { id: true },
-      _avg: { score: true },
-      _sum: { totalExecutions: true },
-    }),
-  ]);
-
-  const totalAgents = totals._count.id;
-  const totalExecutions = totals._sum.totalExecutions ?? 0;
-  const avgScore = totals._avg.score != null ? Math.round(totals._avg.score * 10) / 10 : 0;
-
   return (
     <div className="min-h-screen pb-16">
       <header className="border-b border-border bg-black/40 backdrop-blur">
@@ -49,15 +30,15 @@ export default async function Home() {
         <section className="grid gap-4 md:grid-cols-3">
           <div className="surface rounded-lg p-5">
             <div className="text-xs uppercase tracking-[0.14em] text-muted">Agents registered</div>
-            <div className="mono mt-3 text-3xl font-semibold">{totalAgents}</div>
+            <div className="mono mt-3 text-3xl font-semibold">0</div>
           </div>
           <div className="surface rounded-lg p-5">
             <div className="text-xs uppercase tracking-[0.14em] text-muted">Executions tracked</div>
-            <div className="mono mt-3 text-3xl font-semibold">{totalExecutions}</div>
+            <div className="mono mt-3 text-3xl font-semibold">0</div>
           </div>
           <div className="surface rounded-lg p-5">
             <div className="text-xs uppercase tracking-[0.14em] text-muted">Avg network score</div>
-            <div className="mono mt-3 text-3xl font-semibold text-accent">{avgScore}</div>
+            <div className="mono mt-3 text-3xl font-semibold text-accent">0</div>
           </div>
         </section>
 
@@ -68,7 +49,7 @@ export default async function Home() {
               <p className="text-sm text-muted">Browse registered agents and filter by score, chain, and capability.</p>
             </div>
           </div>
-          <LeaderboardFilters initialAgents={agents} initialTotal={activeTotal} />
+          <LeaderboardFilters initialAgents={[]} initialTotal={0} />
         </section>
       </main>
     </div>
