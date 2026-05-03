@@ -8,6 +8,7 @@ import { ScoreBadge } from "@/components/ScoreBadge";
 import { ScoreChart } from "@/components/ScoreChart";
 import { getAgentBundleByEnsName } from "@/lib/agentQueries";
 import { parseJsonArray } from "@/lib/utils";
+import { SimulateButton } from "@/components/SimulateButton";
 
 type PageProps = { params: { name: string } };
 
@@ -140,6 +141,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
                 )}
               </p>
             </div>
+            <SimulateButton ensName={agent.ensName} />
             <div className="surface rounded-lg p-5 text-sm text-muted">
               <p className="font-semibold text-foreground">Onchain profile</p>
               <p className="mt-2 leading-relaxed">
