@@ -88,10 +88,11 @@ export async function getAgentProfile(ensName: string): Promise<AgentENSProfile>
 }
 
 export async function setTextRecords(ensName: string, records: Record<string, string>): Promise<string> {
-  const privateKey = process.env.DEPLOYER_PRIVATE_KEY as Hex | undefined;
-  if (!privateKey || privateKey === "your_wallet_private_key") {
+  const rawPk = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!rawPk || rawPk === "your_wallet_private_key") {
     throw new Error("DEPLOYER_PRIVATE_KEY is required to write ENS text records");
   }
+  const privateKey = rawPk as Hex;
 
   const resolverAddress = await publicClient.getEnsResolver({ name: ensName });
   if (!resolverAddress) throw new Error(`No resolver configured for ${ensName}`);
