@@ -2,7 +2,7 @@
 
 import { Check, ExternalLink, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { isAddress } from "viem";
+import { isAddress, type Hex } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ export function RegisterForm() {
   const [step, setStep] = useState(1);
   const [ensName, setEnsName] = useState("");
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
+  const [ensChecked, setEnsChecked] = useState(false);
   const [checkingEns, setCheckingEns] = useState(false);
   const [description, setDescription] = useState("");
   const [capabilities, setCapabilities] = useState<string[]>([]);
@@ -26,6 +27,9 @@ export function RegisterForm() {
   const [keeperhubId, setKeeperhubId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [registryTxHash, setRegistryTxHash] = useState<Hex | null>(null);
+  const [ensWriteTxHash, setEnsWriteTxHash] = useState<string | null>(null);
   const registryAddress = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS;
 
   const owned = Boolean(
@@ -49,8 +53,14 @@ export function RegisterForm() {
 
   async function checkEns() {
     setCheckingEns(true);
+    setEnsChecked(false);
+    setError(null);
     try {
       setResolvedAddress(await resolveENS(ensName));
+      setEnsChecked(true);
+    } catch (err) {
+      setResolvedAddress(null);
+      setError(err instanceof Error ? err.message : "ENS lookup failed. Check your RPC configuration.");
     } finally {
       setCheckingEns(false);
     }
@@ -60,18 +70,41 @@ export function RegisterForm() {
     setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
   }
 
+  function readErrorMessage(value: unknown): string {
+    if (value instanceof Error && value.message) return value.message;
+    if (typeof value === "object" && value && "shortMessage" in value) {
+      const shortMessage = (value as { shortMessage?: unknown }).shortMessage;
+      if (typeof shortMessage === "string" && shortMessage) return shortMessage;
+    }
+    return "Registration failed";
+  }
+
+  async function parseApiError(response: Response): Promise<string> {
+    try {
+      const body = (await response.json()) as { error?: unknown };
+      if (typeof body.error === "string" && body.error) return body.error;
+    } catch {
+      // Fall through to status text.
+    }
+    return response.statusText || `Request failed with status ${response.status}`;
+  }
+
   async function submit() {
     if (!address || !registryAddress || !isAddress(registryAddress)) return;
     setSubmitting(true);
+    setError(null);
+    setRegistryTxHash(null);
+    setEnsWriteTxHash(null);
     try {
-      await writeContractAsync({
+      const registryTx = await writeContractAsync({
         address: registryAddress,
         abi: agentRegistryAbi,
         functionName: "register",
         args: [ensName],
       });
+      setRegistryTxHash(registryTx);
 
-      await fetch("/api/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,13 +115,19 @@ export function RegisterForm() {
           description,
           keeperhubId,
         }),
-      }).then((response) => {
-        if (!response.ok) throw new Error("registration API failed");
-        return response.json();
       });
+      if (!response.ok) {
+        const message = await parseApiError(response);
+        throw new Error(`Registry transaction succeeded, but AgentCred indexing failed: ${message}`);
+      }
+
+      const body = (await response.json()) as { ensWriteTxHash?: string };
+      setEnsWriteTxHash(body.ensWriteTxHash ?? null);
 
       setProfileUrl(`/agent/${encodeURIComponent(ensName)}`);
       setStep(5);
+    } catch (err) {
+      setError(readErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -105,6 +144,20 @@ export function RegisterForm() {
         </div>
         <h1 className="text-3xl font-bold">Agent registered</h1>
         <p className="mt-2 text-muted">{ensName} is now indexed by AgentCred.</p>
+        <div className="mt-6 space-y-2 rounded-lg border border-border bg-black/30 p-4 text-left text-sm">
+          {registryTxHash ? (
+            <p className="break-all">
+              <span className="text-muted">Registry tx:</span>{" "}
+              <span className="mono">{registryTxHash}</span>
+            </p>
+          ) : null}
+          {ensWriteTxHash ? (
+            <p className="break-all">
+              <span className="text-muted">ENS write tx:</span>{" "}
+              <span className="mono">{ensWriteTxHash}</span>
+            </p>
+          ) : null}
+        </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild><a href={profileUrl}>View profile</a></Button>
           <Button asChild variant="secondary"><a href={`https://twitter.com/intent/tweet?text=${tweet}`}>Share</a></Button>
@@ -137,7 +190,16 @@ export function RegisterForm() {
           <h1 className="text-3xl font-bold">ENS identity</h1>
           <p className="mt-2 text-muted">Use a Sepolia .eth name controlled by the connected operator.</p>
           <div className="mt-6 flex gap-3">
-            <Input value={ensName} onChange={(event) => setEnsName(event.target.value)} placeholder="myagent.agentcred.eth" />
+            <Input
+              value={ensName}
+              onChange={(event) => {
+                setEnsName(event.target.value);
+                setResolvedAddress(null);
+                setEnsChecked(false);
+                setError(null);
+              }}
+              placeholder="myagent.agentcred.eth"
+            />
             <Button variant="secondary" onClick={checkEns} disabled={!ensName || checkingEns}>
               {checkingEns ? <Loader2 className="h-4 w-4 animate-spin" /> : "Check"}
             </Button>
@@ -147,6 +209,14 @@ export function RegisterForm() {
               {owned ? "Resolved and owned by connected wallet." : `Resolves to ${truncateAddress(resolvedAddress)}.`}
             </p>
           )}
+          {!checkingEns && ensChecked && resolvedAddress === null ? (
+            <p className="mt-3 text-sm text-danger">No address record found for this ENS name on Sepolia.</p>
+          ) : null}
+          {error ? (
+            <div className="mt-4 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+              {error}
+            </div>
+          ) : null}
           <a className="mt-4 inline-flex items-center gap-1 text-sm text-muted" href="https://app.ens.domains" target="_blank" rel="noreferrer">
             Get an ENS name on Sepolia <ExternalLink className="h-3 w-3" />
           </a>
@@ -186,6 +256,14 @@ export function RegisterForm() {
           </div>
           {!registryAddress || !isAddress(registryAddress) ? (
             <p className="mt-4 text-sm text-danger">Set NEXT_PUBLIC_REGISTRY_ADDRESS after deploying AgentRegistry.</p>
+          ) : null}
+          <p className="mt-4 text-sm text-muted">
+            The registry transaction is signed by your wallet. AgentCred text records are written by the configured server wallet, which must control this ENS name or namespace on Sepolia.
+          </p>
+          {error && step === 4 ? (
+            <div className="mt-4 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+              {error}
+            </div>
           ) : null}
           <div className="mt-8 flex justify-between">
             <Button variant="secondary" onClick={() => setStep(3)}>Back</Button>
