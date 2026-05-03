@@ -38,3 +38,7 @@ next-env.d.ts
 # sqlite (local Prisma)
 *.db
 prisma/*.db
+
+# hardhat generated output
+contracts/artifacts/
+contracts/typechain-types/

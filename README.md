@@ -166,12 +166,16 @@ Main methods:
 - `getAgent(address operator)`
 - `isRegistered(address operator)`
 
-Sepolia deployment status: pending.
+Sepolia deployment:
+
+```text
+0xfB1CA7720191419522a58879D0a0dD95dc8eFDbA
+```
 
 After deployment, set:
 
 ```env
-NEXT_PUBLIC_REGISTRY_ADDRESS=0x...
+NEXT_PUBLIC_REGISTRY_ADDRESS=0xfB1CA7720191419522a58879D0a0dD95dc8eFDbA
 ```
 
 ## Local Setup
@@ -296,9 +300,8 @@ See `FEEDBACK.md`.
 - [x] Public agent profile
 - [x] Operator dashboard
 - [x] KeeperHub feedback draft
-- [ ] Sepolia contract deployment
+- [x] Sepolia contract deployment
 - [ ] ENS namespace/controller configured
 - [ ] Live KeeperHub webhook verified
 - [ ] Vercel deployment
 - [ ] Final demo video
-
