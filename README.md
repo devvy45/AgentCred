@@ -56,7 +56,7 @@ Runtime score updates flow through KeeperHub:
 - viem
 - wagmi v2
 - Prisma
-- SQLite
+- SQLite locally, Turso/libSQL for Vercel persistence
 - Recharts
 - Hardhat
 - Solidity
@@ -199,6 +199,10 @@ KEEPERHUB_WEBHOOK_SECRET=
 
 DATABASE_URL=file:./prisma/dev.db
 
+# Optional for Vercel/production hosted SQLite via Turso/libSQL.
+TURSO_DATABASE_URL=
+TURSO_AUTH_TOKEN=
+
 DEPLOYER_PRIVATE_KEY=
 ```
 
@@ -246,6 +250,8 @@ The deployer wallet should also be configured as the ENS controller for the Agen
 
 Target deployment is Vercel.
 
+Vercel functions do not provide persistent writable local storage for SQLite database files. For a live deployment, AgentCred keeps the SQLite-compatible schema but uses Turso/libSQL through Prisma's libSQL adapter. Local development can continue using `DATABASE_URL=file:./prisma/dev.db`.
+
 Required Vercel environment variables:
 
 ```env
@@ -256,8 +262,20 @@ NEXT_PUBLIC_ENS_PARENT
 KEEPERHUB_API_KEY
 KEEPERHUB_WEBHOOK_SECRET
 DATABASE_URL
+TURSO_DATABASE_URL
+TURSO_AUTH_TOKEN
 DEPLOYER_PRIVATE_KEY
 ```
+
+For production, set:
+
+```env
+TURSO_DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=...
+DATABASE_URL=file:./prisma/dev.db
+```
+
+`DATABASE_URL` remains present for Prisma CLI compatibility; runtime database traffic uses Turso when `TURSO_DATABASE_URL` is set.
 
 KeeperHub webhook URL after deployment:
 

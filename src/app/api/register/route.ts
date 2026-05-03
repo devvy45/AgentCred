@@ -61,10 +61,18 @@ export async function POST(request: Request) {
 
   let agent;
   try {
-    agent = await prisma.agent.create({
-      data: {
+    agent = await prisma.agent.upsert({
+      where: { operatorAddress },
+      create: {
         ensName,
         operatorAddress,
+        capabilities: JSON.stringify(capabilities),
+        chains: JSON.stringify(chains),
+        description: description ?? null,
+        keeperhubId: keeperhubId ?? null,
+      },
+      update: {
+        ensName,
         capabilities: JSON.stringify(capabilities),
         chains: JSON.stringify(chains),
         description: description ?? null,
@@ -73,7 +81,7 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return NextResponse.json({ error: "Agent or operator already registered" }, { status: 409 });
+      return NextResponse.json({ error: "ENS name is already registered to another operator" }, { status: 409 });
     }
     throw e;
   }
@@ -101,7 +109,6 @@ export async function POST(request: Request) {
       ensWriteTxHash,
     });
   } catch (err) {
-    await prisma.agent.delete({ where: { id: agent.id } }).catch(() => {});
     const message = err instanceof Error ? err.message : "ENS write failed";
     return NextResponse.json({ error: message, success: false }, { status: 502 });
   }
