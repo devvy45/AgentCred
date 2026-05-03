@@ -106,7 +106,7 @@ export function RegisterForm() {
         abi: agentRegistryAbi,
         functionName: "register",
         args: [ensName],
-        gas: 200000n,
+        gas: BigInt(200000),
       });
       setRegistryTxHash(registryTx);
 
