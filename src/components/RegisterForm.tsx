@@ -30,11 +30,15 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [registryTxHash, setRegistryTxHash] = useState<Hex | null>(null);
   const [ensWriteTxHash, setEnsWriteTxHash] = useState<string | null>(null);
+  const [ensWriteWarning, setEnsWriteWarning] = useState<string | null>(null);
   const registryAddress = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS;
+  const ensParent = process.env.NEXT_PUBLIC_ENS_PARENT ?? "agentcred.eth";
 
   const owned = Boolean(
     address && resolvedAddress && resolvedAddress.toLowerCase() === address.toLowerCase(),
   );
+  const namespaceName = ensName.toLowerCase().endsWith(`.${ensParent.toLowerCase()}`);
+  const canContinueEns = owned || namespaceName;
 
   const records = useMemo(
     () => ({
@@ -95,6 +99,7 @@ export function RegisterForm() {
     setError(null);
     setRegistryTxHash(null);
     setEnsWriteTxHash(null);
+    setEnsWriteWarning(null);
     try {
       const registryTx = await writeContractAsync({
         address: registryAddress,
@@ -121,8 +126,9 @@ export function RegisterForm() {
         throw new Error(`Registry transaction succeeded, but AgentCred indexing failed: ${message}`);
       }
 
-      const body = (await response.json()) as { ensWriteTxHash?: string };
+      const body = (await response.json()) as { ensWriteTxHash?: string | null; ensWriteError?: string };
       setEnsWriteTxHash(body.ensWriteTxHash ?? null);
+      setEnsWriteWarning(body.ensWriteError ?? null);
 
       setProfileUrl(`/agent/${encodeURIComponent(ensName)}`);
       setStep(5);
@@ -157,6 +163,11 @@ export function RegisterForm() {
               <span className="mono">{ensWriteTxHash}</span>
             </p>
           ) : null}
+          {ensWriteWarning ? (
+            <p className="text-warning">
+              ENS write pending: {ensWriteWarning}
+            </p>
+          ) : null}
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild><a href={profileUrl}>View profile</a></Button>
@@ -188,7 +199,7 @@ export function RegisterForm() {
       {step === 2 && (
         <section>
           <h1 className="text-3xl font-bold">ENS identity</h1>
-          <p className="mt-2 text-muted">Use a Sepolia .eth name controlled by the connected operator.</p>
+          <p className="mt-2 text-muted">Use a deployer-controlled subname like myagent.{ensParent} for the live demo.</p>
           <div className="mt-6 flex gap-3">
             <Input
               value={ensName}
@@ -210,7 +221,11 @@ export function RegisterForm() {
             </p>
           )}
           {!checkingEns && ensChecked && resolvedAddress === null ? (
-            <p className="mt-3 text-sm text-danger">No address record found for this ENS name on Sepolia.</p>
+            <p className={cn("mt-3 text-sm", namespaceName ? "text-warning" : "text-danger")}>
+              {namespaceName
+                ? `No address record found yet. You can continue with this ${ensParent} subname for the demo.`
+                : "No address record found for this ENS name on Sepolia."}
+            </p>
           ) : null}
           {error ? (
             <div className="mt-4 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
@@ -222,7 +237,7 @@ export function RegisterForm() {
           </a>
           <div className="mt-8 flex justify-between">
             <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
-            <Button disabled={!owned} onClick={() => setStep(3)}>Next</Button>
+            <Button disabled={!canContinueEns} onClick={() => setStep(3)}>Next</Button>
           </div>
         </section>
       )}

@@ -110,6 +110,11 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "ENS write failed";
-    return NextResponse.json({ error: message, success: false }, { status: 502 });
+    return NextResponse.json({
+      success: true,
+      agent,
+      ensWriteTxHash: null,
+      ensWriteError: message,
+    });
   }
 }
